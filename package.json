@@ -1,0 +1,25 @@
+{
+  "name": "transcription",
+  "private": true,
+  "license": "",
+  "author": "Lucas Wonderley",
+  "repository": "transcription",
+  "engines": {
+    "node": ">=8"
+  },
+  "scripts": {
+    "test": "mocha system-test --timeout 600000"
+  },
+  "dependencies": {
+    "@google-cloud/speech": "^2.3.1",
+    "@google-cloud/storage": "^2.0.0",
+    "node-record-lpcm16": "^0.3.0",
+    "yargs": "^13.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "execa": "^1.0.0",
+    "mocha": "^6.0.0",
+    "uuid": "^3.3.0"
+  }
+}
