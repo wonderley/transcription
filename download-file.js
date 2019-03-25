@@ -15,7 +15,6 @@ function downloadFile(audioUrl) {
       } else {
         console.log(`downloading url: ${res.headers.location}`);
         http.get(res.headers.location, res2 => {
-          debugger;
           if (res2.statusCode === 200) {
             res2.pipe(file);
             file.on('finish', () => {
@@ -34,19 +33,19 @@ function downloadFile(audioUrl) {
 
 function convertToWav(file) {
   const decoder = new Lame({
-      output: `${file}.wav`
+    output: `${file}.wav`
   }).setFile(file);
   
   decoder
-      .decode()
-      .then(() => {
-          console.log('decoding done');
-          // Decoding finished
-      })
-      .catch(error => {
-          console.error(error);
-          // Something went wrong
-      });
+    .decode()
+    .then(() => {
+      console.log('decoding done');
+      // Decoding finished
+    })
+    .catch(error => {
+      console.error(error);
+      // Something went wrong
+    });
 }
 
 function downloadRss() {
@@ -79,17 +78,17 @@ if (require.main === module) {
 
 
 // Had issues using this to get the data
-            // res2.setEncoding('utf8');
-            // let rawData = '';
-            // res2.on('data', (chunk, b, c) => {
-            //   debugger;
-            //   rawData += chunk.toString();
-            // });
-            // res2.on('end', () => {
-            //   try {
-            //     debugger;
-            //     fs.writeFileSync('podcast.mp3', rawData);
-            //   } catch (e) {
-            //     console.error(e.message);
-            //   }
-            // });
+// res2.setEncoding('utf8');
+// let rawData = '';
+// res2.on('data', (chunk, b, c) => {
+//   debugger;
+//   rawData += chunk.toString();
+// });
+// res2.on('end', () => {
+//   try {
+//     debugger;
+//     fs.writeFileSync('podcast.mp3', rawData);
+//   } catch (e) {
+//     console.error(e.message);
+//   }
+// });
