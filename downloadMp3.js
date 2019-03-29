@@ -2,86 +2,71 @@ const http = require('http');
 const fs = require('fs');
 const request = require('request');
 const parsePodcast = require('node-podcast-parser');
-const Lame = require("node-lame").Lame;
-const {Storage} = require('@google-cloud/storage');
 
-function downloadRss() {
-  const podcastUrl = 'https://thestartupchat.com/feed/podcast/';
-  request(podcastUrl, (err, res, data) => {
-    if (err) {
-      console.error('Network error', err);
-      return;
-    }
-  
-    parsePodcast(data, (err, data) => {
+function downloadMp3() {
+  return new Promise(function(resolve, reject) {
+    const podcastUrl = 'https://thestartupchat.com/feed/podcast/';
+    request(podcastUrl, (err, res, data) => {
       if (err) {
-        console.error('Parsing error', err);
-        return;
+        console.error('Network error', err);
+        return reject(err);
       }
-
-      const enclosure = data.episodes[0].enclosure;
-      const fileSize = enclosure.filesize;
-      const type = enclosure.type;
-      console.log(type);
-      const url = enclosure.url;
-      downloadFile(url);
+    
+      parsePodcast(data, (err, data) => {
+        if (err) {
+          console.error('Parsing error', err);
+          return reject(err);
+        }
+  
+        const episode = data.episodes[0];
+        const enclosure = episode.enclosure;
+        const type = enclosure.type;
+        if (type !== 'audio/mpeg') {
+          return reject(new Error(`Unexpected audio type ${type}`));
+        }
+        const url = enclosure.url;
+        downloadFile(url, resolve, reject);
+      });
     });
   });
 }
 
-function downloadFile(audioUrl) {
-  console.log(`downloading url: ${audioUrl}`);
-  const mp3FileName = 'podcastDownload.mp3';
-  const file = fs.createWriteStream(mp3FileName);
+function downloadFile(audioUrl, resolve, reject) {
+  const urlSplitBySlashes = audioUrl.split('/');
+  const fileName = urlSplitBySlashes[urlSplitBySlashes.length - 1];
+  console.log(`downloading url ${audioUrl} to ${fileName}`);
+  const file = fs.createWriteStream(fileName);
   http.get(audioUrl, res => {
     if (res.statusCode === 302) {
       if (!res.headers.location) {
         console.error('Expected location header, but it was not found.');
+        return reject();
       } else {
         console.log(`downloading url: ${res.headers.location}`);
         http.get(res.headers.location, res2 => {
           if (res2.statusCode === 200) {
             res2.pipe(file);
             file.on('finish', () => {
-              console.log(`downloaded ${mp3FileName}`);
+              console.log(`downloaded ${fileName}`);
+              return resolve(fileName);
             });
           } else {
             console.error(`Expected response code 200 but got ${res2.statusCode}`);
+            return reject();
           }
         });
       }
     } else {
       console.error(`Expected response code 302 but got ${res.statusCode}`);
+      return reject();
     }
   });
 }
 
-// function convertToWav(file) {
-//   const wavFileName = 'podcastDownload.wav';
-//   // const decoder = new Lame({
-//   //   output: wavFileName,
-//   //   'to-mono': true,
-//   // }).setFile(file);
-
-//   const encoder = new Lame({
-//     output: "./downsample.mp3",
-//     sfreq: 16,
-//     mp3Input: true,
-//   }).setFile("./podcastDownload.mp3");
-  
-//   // decoder
-//   //   .decode()
-//   encoder
-//     .encode()
-//     .then(() => {
-//       //uploadWavFile(wavFileName);
-//     })
-//     .catch(error => {
-//       console.error(error);
-//       // Something went wrong
-//     });
-// }
-
 if (require.main === module) {
-  downloadRss();
+  downloadMp3();
 }
+
+module.exports = {
+  downloadMp3,
+};
